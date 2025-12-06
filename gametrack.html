@@ -92,6 +92,7 @@
       <div class="content">
         <form id="addForm" autocomplete="off">
           <div class="row">
+            <h2>What platform is the game on?</h2>
             <select id="device" required>
               <option value="">Choose device</option>
               <option>PC</option>
@@ -118,222 +119,194 @@
   </main>
 
   <script>
-    // --- State & persistence ---
-    const STORAGE_KEY = "gameTracker.v1";
-    let state = load() || [];
+const API_URL = "http://localhost:3000/games"; // backend endpoint
+let state = [];
 
-    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-    function load() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; } }
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+const uid = () => Math.random().toString(36).slice(2, 10);
 
-    // --- Helpers ---
-    const $ = (sel) => document.querySelector(sel);
-    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
-    const uid = () => Math.random().toString(36).slice(2, 10);
-
-    // --- Mock metadata lookup (replace with real API as needed) ---
- const API_KEY = "eec0b7eb3fc341ffb9dbad7f8e0e2822";
-
-async function fetchMetadata(query) {
-  const url = `https://api.rawg.io/api/games?search=${encodeURIComponent(query)}&key=${API_KEY}&page_size=1`;
-  const resp = await fetch(url);
-  const data = await resp.json();
-  const game = data.results?.[0];
-  return {
-    title: game?.name || query,
-    releaseDate: game?.released || "",
-    imageUrl: game?.background_image || ""
-  };
+// Fetch helpers 
+async function loadGames() {
+  const resp = await fetch(API_URL);
+  state = await resp.json();
+  render();
 }
-    function capitalize(s) { return s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" "); }
-    function guessYear(query) {
-      const now = new Date().getFullYear();
-      // crude guess to make it feel dynamic
-      return `${Math.max(1998, Math.min(now, 2010 + (query.length % 13)))}-06-15`;
-    }
-    function placeholderCover(query) {
-      const base = "https://picsum.photos/seed/";
-      return `${base}${encodeURIComponent(query)}/600/400`;
-    }
 
-    // --- Rendering ---
-    const grid = $("#libraryGrid");
-    const filterRadios = $$("input[name='deviceFilter']");
-    const searchInput = $("#searchInput");
+async function addGame(game) {
+  await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(game)
+  });
+  loadGames();
+}
 
-    function render() {
-      const deviceFilter = filterRadios.find(r => r.checked)?.value || "ALL";
-      const term = searchInput.value.trim().toLowerCase();
-      grid.innerHTML = "";
+async function updateGame(id, updates) {
+  await fetch(`${API_URL}/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates)
+  });
+  loadGames();
+}
 
-      const filtered = state.filter(g => {
-        const matchDevice = deviceFilter === "ALL" || g.device === deviceFilter;
-        const matchTerm = !term || g.title.toLowerCase().includes(term);
-        return matchDevice && matchTerm;
-      });
+async function deleteGame(id) {
+  await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+  loadGames();
+}
 
-      if (filtered.length === 0) {
-        grid.innerHTML = `<div class="muted">No games found. Try adding one above.</div>`;
-        return;
-      }
+// Render
+const grid = $("#libraryGrid");
+const filterRadios = $$("input[name='deviceFilter']");
+const searchInput = $("#searchInput");
 
-      for (const g of filtered) {
-        const card = document.createElement("div");
-        card.className = "game";
-        card.innerHTML = `
-          <div class="cover">${g.imageUrl ? `<img src="${g.imageUrl}" alt="${escapeHtml(g.title)} cover" />` : `<span class="muted">No cover</span>`}</div>
-          <div class="meta">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <strong>${escapeHtml(g.title)}</strong>
-              <span class="badge">${g.device}</span>
-            </div>
-            <div class="muted">Release: ${g.releaseDate || "Unknown"}</div>
-            <div class="storage-row">
-              <input type="text" value="${escapeAttr(g.storagePath)}" data-id="${g.id}" class="storage-edit" />
-              <button class="secondary" data-id="${g.id}" data-action="save-storage">Save</button>
-            </div>
-            <div class="actions">
-              <button class="secondary" data-id="${g.id}" data-action="edit">Edit</button>
-              <button class="danger" data-id="${g.id}" data-action="delete">Delete</button>
-            </div>
-          </div>
-        `;
-        grid.appendChild(card);
-      }
-    }
+function render() {
+  const deviceFilter = filterRadios.find(r => r.checked)?.value || "ALL";
+  const term = searchInput.value.trim().toLowerCase();
+  grid.innerHTML = "";
 
-    function escapeHtml(s = "") {
-      return s.replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
-    }
-    function escapeAttr(s = "") {
-      return s.replace(/"/g, "&quot;");
-    }
+  const filtered = state.filter(g => {
+    const matchDevice = deviceFilter === "ALL" || g.device === deviceFilter;
+    const matchTerm = !term || g.title.toLowerCase().includes(term);
+    return matchDevice && matchTerm;
+  });
 
-    // --- Add form logic ---
-    const addForm = $("#addForm");
-    const deviceSel = $("#device");
-    const titleInput = $("#titleInput");
-    const storageInput = $("#storageInput");
-    const releaseInput = $("#releaseInput");
-    const coverInput = $("#coverInput");
-    const fetchMetaBtn = $("#fetchMetaBtn");
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="muted">No games found. Try adding one above.</div>`;
+    return;
+  }
 
-    fetchMetaBtn.addEventListener("click", async () => {
-      const q = titleInput.value.trim();
-      if (!q) { alert("Enter a game title first."); return; }
-      fetchMetaBtn.disabled = true; fetchMetaBtn.textContent = "Fetching…";
-      try {
-        const meta = await fetchMetadataMock(q);
-        if (!releaseInput.value) releaseInput.value = meta.releaseDate;
-        if (!coverInput.value) coverInput.value = meta.imageUrl;
-      } catch (e) {
-        alert("Failed to fetch metadata. Try again.");
-      } finally {
-        fetchMetaBtn.disabled = false; fetchMetaBtn.textContent = "Fetch metadata";
-      }
-    });
+  for (const g of filtered) {
+    const card = document.createElement("div");
+    card.className = "game";
+    card.innerHTML = `
+      <div class="cover">${g.imageUrl ? `<img src="${g.imageUrl}" alt="${escapeHtml(g.title)} cover" />` : `<span class="muted">No cover</span>`}</div>
+      <div class="meta">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong>${escapeHtml(g.title)}</strong>
+          <span class="badge">${g.device}</span>
+        </div>
+        <div class="muted">Release: ${g.releaseDate || "Unknown"}</div>
+        <div class="storage-row">
+          <input type="text" value="${escapeAttr(g.storagePath)}" data-id="${g.id}" class="storage-edit" />
+          <button class="secondary" data-id="${g.id}" data-action="save-storage">Save</button>
+        </div>
+        <div class="actions">
+          <button class="secondary" data-id="${g.id}" data-action="edit">Edit</button>
+          <button class="danger" data-id="${g.id}" data-action="delete">Delete</button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  }
+}
 
-    addForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const device = deviceSel.value.trim();
-      const title = titleInput.value.trim();
-      const storagePath = storageInput.value.trim();
-      if (!device || !title || !storagePath) {
-        alert("Please fill device, title, and storage directory.");
-        return;
-      }
-      const game = {
-        id: uid(),
-        device,
-        title,
-        storagePath,
+function escapeHtml(s = "") {
+  return s.replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+function escapeAttr(s = "") {
+  return s.replace(/"/g, "&quot;");
+}
+
+// Library logic
+const addForm = $("#addForm");
+const deviceSel = $("#device");
+const titleInput = $("#titleInput");
+const storageInput = $("#storageInput");
+const releaseInput = $("#releaseInput");
+const coverInput = $("#coverInput");
+const fetchMetaBtn = $("#fetchMetaBtn");
+
+fetchMetaBtn.addEventListener("click", async () => {
+  const q = titleInput.value.trim();
+  if (!q) { alert("Enter a game title first."); return; }
+  fetchMetaBtn.disabled = true; fetchMetaBtn.textContent = "Fetching…";
+  try {
+    const meta = await fetchMetadata(q);
+    if (!releaseInput.value) releaseInput.value = meta.releaseDate;
+    if (!coverInput.value) coverInput.value = meta.imageUrl;
+  } catch (e) {
+    alert("Failed to fetch metadata. Try again.");
+  } finally {
+    fetchMetaBtn.disabled = false; fetchMetaBtn.textContent = "Fetch metadata";
+  }
+});
+
+addForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const device = deviceSel.value.trim();
+  const title = titleInput.value.trim();
+  const storagePath = storageInput.value.trim();
+  if (!device || !title || !storagePath) {
+    alert("Please fill device, title, and storage directory.");
+    return;
+  }
+  const game = {
+    id: uid(),
+    device,
+    title,
+    storagePath,
+    releaseDate: releaseInput.value || "",
+    imageUrl: coverInput.value || ""
+  };
+  addGame(game);
+  addForm.reset();
+});
+
+// Library 
+grid.addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  const id = btn.dataset.id;
+  const action = btn.dataset.action;
+
+  if (action === "delete") {
+    deleteGame(id);
+  } else if (action === "edit") {
+    const g = state.find(x => x.id === id);
+    if (!g) return;
+    deviceSel.value = g.device;
+    titleInput.value = g.title;
+    storageInput.value = g.storagePath;
+    releaseInput.value = g.releaseDate || "";
+    coverInput.value = g.imageUrl || "";
+
+    const submitBtn = addForm.querySelector("button[type='submit']");
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = "Update game";
+    const handler = (ev) => {
+      ev.preventDefault();
+      const updates = {
+        device: deviceSel.value,
+        title: titleInput.value.trim(),
+        storagePath: storageInput.value.trim(),
         releaseDate: releaseInput.value || "",
         imageUrl: coverInput.value || ""
       };
-      state.unshift(game);
-      save(); render();
+      updateGame(id, updates);
       addForm.reset();
-    });
+      submitBtn.textContent = originalText;
+      submitBtn.removeEventListener("click", handler);
+    };
+    submitBtn.addEventListener("click", handler);
+  } else if (action === "save-storage") {
+    const input = grid.querySelector(`input.storage-edit[data-id="${id}"]`);
+    if (input) {
+      updateGame(id, { storagePath: input.value.trim() });
+      btn.textContent = "Saved ✓";
+      setTimeout(() => btn.textContent = "Save", 800);
+    }
+  }
+});
 
-    // --- Library actions ---
-    grid.addEventListener("click", (e) => {
-      const btn = e.target.closest("button");
-      if (!btn) return;
-      const id = btn.dataset.id;
-      const action = btn.dataset.action;
+filterRadios.forEach(r => r.addEventListener("change", render));
+searchInput.addEventListener("input", render);
 
-      if (action === "delete") {
-        state = state.filter(g => g.id !== id);
-        save(); render();
-      } else if (action === "edit") {
-        const g = state.find(x => x.id === id);
-        if (!g) return;
-        deviceSel.value = g.device;
-        titleInput.value = g.title;
-        storageInput.value = g.storagePath;
-        releaseInput.value = g.releaseDate || "";
-        coverInput.value = g.imageUrl || "";
-        // Replace the submit with an "Update" action temporarily
-        const submitBtn = addForm.querySelector("button[type='submit']");
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = "Update game";
-        const handler = (ev) => {
-          ev.preventDefault();
-          g.device = deviceSel.value;
-          g.title = titleInput.value.trim();
-          g.storagePath = storageInput.value.trim();
-          g.releaseDate = releaseInput.value || "";
-          g.imageUrl = coverInput.value || "";
-          save(); render();
-          addForm.reset();
-          submitBtn.textContent = originalText;
-          submitBtn.removeEventListener("click", handler);
-        };
-        submitBtn.addEventListener("click", handler);
-      } else if (action === "save-storage") {
-        const input = grid.querySelector(`input.storage-edit[data-id="${id}"]`);
-        const g = state.find(x => x.id === id);
-        if (g && input) {
-          g.storagePath = input.value.trim();
-          save();
-          // small feedback
-          btn.textContent = "Saved ✓";
-          setTimeout(() => btn.textContent = "Save", 800);
-        }
-      }
-    });
+// --- Init ---
+loadGames();
+</script>
 
-    // --- Filters & search ---
-    filterRadios.forEach(r => r.addEventListener("change", render));
-    searchInput.addEventListener("input", render);
-
-    // --- Import/Export ---
-    $("#exportBtn").addEventListener("click", () => {
-      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = "game-tracker.json"; a.click();
-      URL.revokeObjectURL(url);
-    });
-    $("#importBtn").addEventListener("click", async () => {
-      const input = document.createElement("input");
-      input.type = "file"; input.accept = ".json,application/json";
-      input.onchange = async () => {
-        const file = input.files[0];
-        if (!file) return;
-        const text = await file.text();
-        try {
-          const data = JSON.parse(text);
-          if (!Array.isArray(data)) throw new Error("Invalid format");
-          state = data; save(); render();
-        } catch {
-          alert("Invalid JSON file.");
-        }
-      };
-      input.click();
-    });
-
-    // --- Init ---
-    render();
-  </script>
 </body>
 </html>
+  
