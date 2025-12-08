@@ -110,7 +110,7 @@
             <button type="button" id="fetchMetaBtn" class="secondary">Fetch metadata</button>
           </div>
           <button type="submit">Add game</button>
-          <p class="note">Tip: Click “Fetch metadata” to auto-fill from the mock API. You can replace it with RAWG/IGDB later.</p>
+          <p class="note">Tip: Click “Fetch metadata” to fill in data.</p>
         </form>
 
         <div id="libraryGrid" class="grid" aria-live="polite"></div>
@@ -118,15 +118,16 @@
     </section>
   </main>
 
-  <script>
-const API_URL = "http://localhost:3000/games"; // backend endpoint
+<script>
+const API_URL = "http://localhost:3000/games"; 
+const RAWG_KEY = "eec0b7eb3fc341ffb9dbad7f8e0e2822"; 
 let state = [];
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 const uid = () => Math.random().toString(36).slice(2, 10);
 
-// Fetch helpers 
+// --- Fetch helpers (MongoDB backend) ---
 async function loadGames() {
   const resp = await fetch(API_URL);
   state = await resp.json();
@@ -156,7 +157,16 @@ async function deleteGame(id) {
   loadGames();
 }
 
-// Render
+// --- RAWG API search (via backend proxy) ---
+async function fetchRawgGames(query) {
+  const url = `http://localhost:3000/rawg?q=${encodeURIComponent(query)}`;
+  const resp = await fetch(url);
+  const data = await resp.json();
+  return data.results || [];
+}
+
+
+// --- Rendering local DB ---
 const grid = $("#libraryGrid");
 const filterRadios = $$("input[name='deviceFilter']");
 const searchInput = $("#searchInput");
@@ -202,6 +212,55 @@ function render() {
   }
 }
 
+// --- Rendering RAWG results ---
+function renderRawg(results) {
+  grid.innerHTML = "";
+
+  if (results.length === 0) {
+    grid.innerHTML = `<div class="muted">No games found on RAWG.</div>`;
+    return;
+  }
+
+  for (const g of results) {
+    const card = document.createElement("div");
+    card.className = "game";
+    card.innerHTML = `
+      <div class="cover">${g.background_image ? `<img src="${g.background_image}" alt="${escapeHtml(g.name)} cover" />` : `<span class="muted">No cover</span>`}</div>
+      <div class="meta">
+        <strong>${escapeHtml(g.name)}</strong>
+        <div class="muted">Release: ${g.released || "Unknown"}</div>
+        <button class="secondary" onclick="addGameFromRawg('${g.id}', '${escapeAttr(g.name)}', '${escapeAttr(g.background_image || "")}', '${g.released || ""}')">Add to Library</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+// --- Add RAWG game to DB ---
+async function addGameFromRawg(id, title, imageUrl, releaseDate) {
+  const game = {
+    id,
+    device: "PC", // default, or let user choose
+    title,
+    storagePath: "",
+    releaseDate,
+    imageUrl
+  };
+  await addGame(game);
+}
+
+// --- Search handler ---
+searchInput.addEventListener("input", async () => {
+  const term = searchInput.value.trim();
+  if (!term) {
+    render(); // show local DB games if no search term
+    return;
+  }
+  const results = await fetchRawgGames(term);
+  renderRawg(results);
+});
+
+// --- Escape helpers ---
 function escapeHtml(s = "") {
   return s.replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
 }
@@ -209,103 +268,12 @@ function escapeAttr(s = "") {
   return s.replace(/"/g, "&quot;");
 }
 
-// Library logic
-const addForm = $("#addForm");
-const deviceSel = $("#device");
-const titleInput = $("#titleInput");
-const storageInput = $("#storageInput");
-const releaseInput = $("#releaseInput");
-const coverInput = $("#coverInput");
-const fetchMetaBtn = $("#fetchMetaBtn");
-
-fetchMetaBtn.addEventListener("click", async () => {
-  const q = titleInput.value.trim();
-  if (!q) { alert("Enter a game title first."); return; }
-  fetchMetaBtn.disabled = true; fetchMetaBtn.textContent = "Fetching…";
-  try {
-    const meta = await fetchMetadata(q);
-    if (!releaseInput.value) releaseInput.value = meta.releaseDate;
-    if (!coverInput.value) coverInput.value = meta.imageUrl;
-  } catch (e) {
-    alert("Failed to fetch metadata. Try again.");
-  } finally {
-    fetchMetaBtn.disabled = false; fetchMetaBtn.textContent = "Fetch metadata";
-  }
-});
-
-addForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const device = deviceSel.value.trim();
-  const title = titleInput.value.trim();
-  const storagePath = storageInput.value.trim();
-  if (!device || !title || !storagePath) {
-    alert("Please fill device, title, and storage directory.");
-    return;
-  }
-  const game = {
-    id: uid(),
-    device,
-    title,
-    storagePath,
-    releaseDate: releaseInput.value || "",
-    imageUrl: coverInput.value || ""
-  };
-  addGame(game);
-  addForm.reset();
-});
-
-// Library 
-grid.addEventListener("click", (e) => {
-  const btn = e.target.closest("button");
-  if (!btn) return;
-  const id = btn.dataset.id;
-  const action = btn.dataset.action;
-
-  if (action === "delete") {
-    deleteGame(id);
-  } else if (action === "edit") {
-    const g = state.find(x => x.id === id);
-    if (!g) return;
-    deviceSel.value = g.device;
-    titleInput.value = g.title;
-    storageInput.value = g.storagePath;
-    releaseInput.value = g.releaseDate || "";
-    coverInput.value = g.imageUrl || "";
-
-    const submitBtn = addForm.querySelector("button[type='submit']");
-    const originalText = submitBtn.textContent;
-    submitBtn.textContent = "Update game";
-    const handler = (ev) => {
-      ev.preventDefault();
-      const updates = {
-        device: deviceSel.value,
-        title: titleInput.value.trim(),
-        storagePath: storageInput.value.trim(),
-        releaseDate: releaseInput.value || "",
-        imageUrl: coverInput.value || ""
-      };
-      updateGame(id, updates);
-      addForm.reset();
-      submitBtn.textContent = originalText;
-      submitBtn.removeEventListener("click", handler);
-    };
-    submitBtn.addEventListener("click", handler);
-  } else if (action === "save-storage") {
-    const input = grid.querySelector(`input.storage-edit[data-id="${id}"]`);
-    if (input) {
-      updateGame(id, { storagePath: input.value.trim() });
-      btn.textContent = "Saved ✓";
-      setTimeout(() => btn.textContent = "Save", 800);
-    }
-  }
-});
-
-filterRadios.forEach(r => r.addEventListener("change", render));
-searchInput.addEventListener("input", render);
-
 // --- Init ---
 loadGames();
 </script>
+
+
+
 
 </body>
 </html>
