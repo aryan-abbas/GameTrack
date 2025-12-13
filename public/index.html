@@ -14,6 +14,7 @@
       --danger: #ff5468;
       --success: #59d398;
       --border: #262a3f;
+      --warning: #ffa726;
     }
     * { box-sizing: border-box; }
     body {
@@ -24,40 +25,81 @@
       padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--panel);
       display: flex; align-items: center; justify-content: space-between;
     }
-    header h1 { margin: 0; font-size: 20px; }
+    header h1 { margin: 0; font-size: 20px; color: #fff; }
     .container { display: grid; grid-template-columns: 260px 1fr; gap: 16px; padding: 16px; }
     .card {
       background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
     }
-    .card h2 { font-size: 16px; margin: 0; padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--muted); }
-    .card .content { padding: 14px; }
+    .card h2 { 
+      font-size: 18px; margin: 0; padding: 16px 18px; 
+      border-bottom: 1px solid var(--border); 
+      color: #fff; font-weight: 600;
+    }
+    .card .content { padding: 18px; }
 
-    .filters label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; cursor: pointer; }
+    .tabs {
+      display: flex; gap: 8px; padding: 16px 18px; border-bottom: 1px solid var(--border);
+    }
+    .tab {
+      padding: 8px 16px; border-radius: 8px; cursor: pointer; 
+      background: transparent; border: 1px solid var(--border);
+      color: var(--muted); font-weight: 500; transition: all 0.2s;
+    }
+    .tab.active {
+      background: var(--accent); color: #0b1020; border-color: var(--accent);
+    }
+
+    .filters label { 
+      display: flex; align-items: center; gap: 8px; margin-bottom: 10px; 
+      cursor: pointer; color: #fff;
+    }
     .filters input[type="radio"] { accent-color: var(--accent); }
 
-    form { display: grid; gap: 10px; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .form-group { display: flex; flex-direction: column; gap: 4px; }
-    .form-label { color: var(--muted); font-size: 13px; font-weight: 500; }
-    input, select, button {
-      padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: #121528; color: var(--text);
+    form { display: flex; flex-direction: column; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { 
+      color: #fff; font-size: 14px; font-weight: 500; 
+      display: flex; align-items: center; gap: 6px;
     }
-    input::placeholder { color: #70779c; }
-    button { cursor: pointer; background: var(--accent); border: none; color: #0b1020; font-weight: 600; }
-    button.secondary { background: #1d2240; color: var(--text); border: 1px solid var(--border); }
+    .step-number {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--accent); color: #0b1020; font-weight: 600;
+      font-size: 12px;
+    }
+    input, select, button, textarea {
+      padding: 12px 14px; border: 1px solid var(--border); 
+      border-radius: 8px; background: #121528; color: #fff;
+      font-size: 14px;
+    }
+    input::placeholder, textarea::placeholder { color: #70779c; }
+    button { 
+      cursor: pointer; background: var(--accent); border: none; 
+      color: #0b1020; font-weight: 600; 
+    }
+    button.secondary { background: #1d2240; color: #fff; border: 1px solid var(--border); }
     button.danger { background: var(--danger); color: #fff; }
+    button.wishlist { background: var(--warning); color: #0b1020; }
 
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
     .game {
       background: #121528; border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
       display: grid; grid-template-rows: 140px auto; min-height: 320px;
     }
+    .game.wishlist-item {
+      border: 2px solid var(--warning);
+    }
     .game .cover { background: #0b0e1c; display: flex; align-items: center; justify-content: center; }
     .game img { max-width: 100%; max-height: 100%; object-fit: cover; }
     .game .meta { padding: 12px; display: grid; gap: 6px; }
-    .badge { display: inline-block; padding: 4px 8px; border-radius: 999px; font-size: 12px; background: #1d2240; border: 1px solid var(--border); color: var(--muted); }
+    .badge { 
+      display: inline-block; padding: 4px 8px; border-radius: 999px; 
+      font-size: 12px; background: #1d2240; border: 1px solid var(--border); 
+      color: var(--muted); 
+    }
+    .badge.wishlist { background: var(--warning); color: #0b1020; border-color: var(--warning); }
     .muted { color: var(--muted); font-size: 12px; }
-    .actions { display: flex; gap: 8px; margin-top: 8px; }
+    .actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
     .storage-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
     .status { 
       display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; 
@@ -66,6 +108,10 @@
     .status.error { background: var(--danger); color: #fff; }
 
     .note { color: var(--muted); font-size: 12px; margin-top: 8px; }
+    .divider { height: 1px; background: var(--border); margin: 16px 0; }
+    
+    textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+    
     @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -94,12 +140,20 @@
     </section>
 
     <section class="card">
-      <h2>Game library</h2>
+      <div class="tabs">
+        <button class="tab active" data-tab="library">My Library</button>
+        <button class="tab" data-tab="wishlist">Wishlist</button>
+      </div>
+      
       <div class="content">
-        <form id="addForm" autocomplete="off">
-          <div class="row">
+        <!-- LIBRARY TAB -->
+        <div id="libraryTab">
+          <form id="addForm" autocomplete="off">
             <div class="form-group">
-              <label class="form-label" for="device">What device is your game on?</label>
+              <label class="form-label" for="device">
+                <span class="step-number">1</span>
+                What device is your game on?
+              </label>
               <select id="device" required>
                 <option value="">Choose device</option>
                 <option>PC</option>
@@ -107,66 +161,151 @@
                 <option>PlayStation</option>
               </select>
             </div>
+
             <div class="form-group">
-              <label class="form-label" for="titleInput">What's the game title?</label>
+              <label class="form-label" for="titleInput">
+                <span class="step-number">2</span>
+                What's the game title?
+              </label>
               <input id="titleInput" type="text" placeholder="e.g., Elden Ring" required />
             </div>
-          </div>
-          <div class="row">
+
             <div class="form-group">
-              <label class="form-label" for="storageInput">Where is the game stored?</label>
+              <label class="form-label" for="storageInput">
+                <span class="step-number">3</span>
+                Where is the game stored?
+              </label>
               <input id="storageInput" type="text" placeholder="e.g., D:\Games\Elden Ring" required />
             </div>
+
             <div class="form-group">
-              <label class="form-label" for="releaseInput">When was it released? (optional)</label>
-              <input id="releaseInput" type="date" placeholder="Release date (optional)" />
+              <label class="form-label" for="releaseInput">
+                <span class="step-number">4</span>
+                When was it released? (optional)
+              </label>
+              <input id="releaseInput" type="date" />
             </div>
-          </div>
-          <div class="row">
+
             <div class="form-group">
-              <label class="form-label" for="coverInput">Cover art URL (optional)</label>
+              <label class="form-label" for="coverInput">
+                <span class="step-number">5</span>
+                Cover art URL (optional)
+              </label>
               <input id="coverInput" type="url" placeholder="https://example.com/cover.jpg" />
             </div>
-            <div class="form-group" style="justify-content: flex-end;">
-              <button type="button" id="fetchMetaBtn" class="secondary" style="margin-top: 22px;">Fetch metadata</button>
-            </div>
-          </div>
-          <button type="submit">Add game</button>
-          <p class="note">Tip: Click "Fetch metadata" to auto-fill from the API. After adding, click "Get Review" to fetch ratings from IGDB.</p>
-          <p class="note" style="margin-top: 4px;">⚠️ IGDB reviews require Twitch API credentials. Get them at <a href="https://dev.twitch.tv/console/apps" target="_blank" style="color: var(--accent);">dev.twitch.tv/console/apps</a></p>
-        </form>
 
-        <div id="libraryGrid" class="grid" aria-live="polite"></div>
+            <button type="button" id="fetchMetaBtn" class="secondary">Auto-fill with metadata</button>
+            <button type="submit">Add to Library</button>
+            
+            <p class="note">💡 Tip: Click "Auto-fill with metadata" to fetch game details automatically. After adding, click "Get Review" to fetch ratings from IGDB.</p>
+          </form>
+
+          <div class="divider"></div>
+          <h2 style="margin: 16px 0 12px 0; font-size: 18px; color: #fff;">📚 Game Library</h2>
+          <div id="libraryGrid" class="grid" aria-live="polite"></div>
+        </div>
+
+        <!-- WISHLIST TAB -->
+        <div id="wishlistTab" style="display: none;">
+          <form id="wishlistForm" autocomplete="off">
+            <div class="form-group">
+              <label class="form-label" for="wishDevice">
+                <span class="step-number">1</span>
+                What device will you play on?
+              </label>
+              <select id="wishDevice" required>
+                <option value="">Choose device</option>
+                <option>PC</option>
+                <option>Nintendo Switch</option>
+                <option>PlayStation</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="wishTitle">
+                <span class="step-number">2</span>
+                What game do you want?
+              </label>
+              <input id="wishTitle" type="text" placeholder="e.g., Hollow Knight" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="wishRelease">
+                <span class="step-number">3</span>
+                Expected release date (optional)
+              </label>
+              <input id="wishRelease" type="date" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="wishNotes">
+                <span class="step-number">4</span>
+                Why do you want this game? (optional)
+              </label>
+              <textarea id="wishNotes" placeholder="Add notes about why you want this game..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="wishCover">
+                <span class="step-number">5</span>
+                Cover art URL (optional)
+              </label>
+              <input id="wishCover" type="url" placeholder="https://example.com/cover.jpg" />
+            </div>
+
+            <button type="button" id="fetchWishMetaBtn" class="secondary">Auto-fill with metadata</button>
+            <button type="submit" class="wishlist">Add to Wishlist</button>
+            
+            <p class="note">⭐ Build your wishlist of games you want to play!</p>
+          </form>
+
+          <div class="divider"></div>
+          <h2 style="margin: 16px 0 12px 0; font-size: 18px; color: #fff;">⭐ My Wishlist</h2>
+          <div id="wishlistGrid" class="grid" aria-live="polite"></div>
+        </div>
       </div>
     </section>
   </main>
 
   <script>
-    // --- API Configuration ---
-    // This will work both locally and on Vercel
     const API_URL = '/api/games';
     const RAWG_API_KEY = "eec0b7eb3fc341ffb9dbad7f8e0e2822";
-    
-  
     const IGDB_CLIENT_ID = "7vfa5tb2hk6alk1ah7rb25s1ef4uuw";
     const IGDB_ACCESS_TOKEN = "ji3ood2sdh3s9lpeu5os9douglb8k2";
 
-    // --- State ---
     let state = [];
+    let wishlist = [];
     let isConnected = false;
+    let currentTab = 'library';
 
-    // --- Helpers ---
     const $ = (sel) => document.querySelector(sel);
     const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
-    // --- MongoDB CRUD Operations ---
+    // Tab switching
+    $$('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        currentTab = tabName;
+        
+        $$('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        $('#libraryTab').style.display = tabName === 'library' ? 'block' : 'none';
+        $('#wishlistTab').style.display = tabName === 'wishlist' ? 'block' : 'none';
+      });
+    });
+
     async function loadGames() {
       try {
         const response = await fetch(API_URL);
         if (!response.ok) throw new Error('Failed to load games');
-        state = await response.json();
+        const allGames = await response.json();
+        
+        state = allGames.filter(g => !g.isWishlist);
+        wishlist = allGames.filter(g => g.isWishlist);
+        
         updateConnectionStatus(true);
-        return state;
+        return allGames;
       } catch (error) {
         console.error('Load error:', error);
         updateConnectionStatus(false);
@@ -183,7 +322,12 @@
         });
         if (!response.ok) throw new Error('Failed to add game');
         const newGame = await response.json();
-        state.unshift(newGame);
+        
+        if (game.isWishlist) {
+          wishlist.unshift(newGame);
+        } else {
+          state.unshift(newGame);
+        }
         return newGame;
       } catch (error) {
         console.error('Add error:', error);
@@ -199,7 +343,8 @@
           body: JSON.stringify(updates)
         });
         if (!response.ok) throw new Error('Failed to update game');
-        const game = state.find(g => g._id === id);
+        
+        const game = state.find(g => g._id === id) || wishlist.find(g => g._id === id);
         if (game) Object.assign(game, updates);
       } catch (error) {
         console.error('Update error:', error);
@@ -207,20 +352,39 @@
       }
     }
 
-    async function deleteGame(id) {
+    async function deleteGame(id, fromWishlist = false) {
       try {
         const response = await fetch(`${API_URL}?id=${id}`, {
           method: 'DELETE'
         });
         if (!response.ok) throw new Error('Failed to delete game');
-        state = state.filter(g => g._id !== id);
+        
+        if (fromWishlist) {
+          wishlist = wishlist.filter(g => g._id !== id);
+        } else {
+          state = state.filter(g => g._id !== id);
+        }
       } catch (error) {
         console.error('Delete error:', error);
         throw error;
       }
     }
 
-    // --- Connection Status ---
+    async function moveToLibrary(id) {
+      const game = wishlist.find(g => g._id === id);
+      if (!game) return;
+      
+      try {
+        await updateGame(id, { isWishlist: false });
+        wishlist = wishlist.filter(g => g._id !== id);
+        state.unshift(game);
+        game.isWishlist = false;
+        render();
+      } catch (error) {
+        alert('Failed to move to library');
+      }
+    }
+
     function updateConnectionStatus(connected) {
       isConnected = connected;
       const status = $('#dbStatus');
@@ -233,7 +397,6 @@
       }
     }
 
-    // --- RAWG API ---
     async function fetchMetadata(query) {
       const url = `https://api.rawg.io/api/games?search=${encodeURIComponent(query)}&key=${RAWG_API_KEY}&page_size=1`;
       const resp = await fetch(url);
@@ -246,7 +409,6 @@
       };
     }
 
-    // --- IGDB API ---
     async function fetchIGDBReviews(gameName) {
       try {
         const searchResponse = await fetch('https://api.igdb.com/v4/games', {
@@ -278,18 +440,23 @@
       }
     }
 
-    // --- Rendering ---
-    const grid = $("#libraryGrid");
+    const libraryGrid = $("#libraryGrid");
+    const wishlistGrid = $("#wishlistGrid");
     const filterRadios = $$("input[name='deviceFilter']");
     const searchInput = $("#searchInput");
 
     function render() {
+      renderLibrary();
+      renderWishlist();
+    }
+
+    function renderLibrary() {
       const deviceFilter = filterRadios.find(r => r.checked)?.value || "ALL";
       const term = searchInput.value.trim().toLowerCase();
-      grid.innerHTML = "";
+      libraryGrid.innerHTML = "";
 
       if (!isConnected) {
-        grid.innerHTML = `<div class="muted">⚠️ Cannot connect to MongoDB. Make sure the server is running.</div>`;
+        libraryGrid.innerHTML = `<div class="muted">⚠️ Cannot connect to MongoDB. Make sure the server is running.</div>`;
         return;
       }
 
@@ -300,7 +467,7 @@
       });
 
       if (filtered.length === 0) {
-        grid.innerHTML = `<div class="muted">No games found. Try adding one above.</div>`;
+        libraryGrid.innerHTML = `<div class="muted">No games found. Try adding one above.</div>`;
         return;
       }
 
@@ -323,7 +490,7 @@
           <div class="cover">${g.imageUrl ? `<img src="${g.imageUrl}" alt="${escapeHtml(g.title)} cover" />` : `<span class="muted">No cover</span>`}</div>
           <div class="meta">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <strong>${escapeHtml(g.title)}</strong>
+              <strong style="color: #fff;">${escapeHtml(g.title)}</strong>
               <span class="badge">${g.device}</span>
             </div>
             <div class="muted">Release: ${g.releaseDate || "Unknown"}</div>
@@ -335,12 +502,48 @@
             </div>
             <div class="actions">
               ${!g.review ? `<button class="secondary" data-id="${g._id}" data-action="fetch-review">Get Review</button>` : ''}
-              <button class="secondary" data-id="${g._id}" data-action="edit">Edit</button>
               <button class="danger" data-id="${g._id}" data-action="delete">Delete</button>
             </div>
           </div>
         `;
-        grid.appendChild(card);
+        libraryGrid.appendChild(card);
+      }
+    }
+
+    function renderWishlist() {
+      wishlistGrid.innerHTML = "";
+
+      if (!isConnected) {
+        wishlistGrid.innerHTML = `<div class="muted">⚠️ Cannot connect to MongoDB.</div>`;
+        return;
+      }
+
+      if (wishlist.length === 0) {
+        wishlistGrid.innerHTML = `<div class="muted">No games in your wishlist yet. Add some above!</div>`;
+        return;
+      }
+
+      for (const g of wishlist) {
+        const card = document.createElement("div");
+        card.className = "game wishlist-item";
+        
+        card.innerHTML = `
+          <div class="cover">${g.imageUrl ? `<img src="${g.imageUrl}" alt="${escapeHtml(g.title)} cover" />` : `<span class="muted">No cover</span>`}</div>
+          <div class="meta">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <strong style="color: #fff;">${escapeHtml(g.title)}</strong>
+              <span class="badge wishlist">⭐ Wishlist</span>
+            </div>
+            <div class="muted">Device: ${g.device}</div>
+            <div class="muted">Release: ${g.releaseDate || "TBA"}</div>
+            ${g.notes ? `<div class="muted" style="margin-top: 8px; font-style: italic;">"${escapeHtml(g.notes)}"</div>` : ''}
+            <div class="actions">
+              <button class="secondary" data-id="${g._id}" data-action="move-to-library">Move to Library</button>
+              <button class="danger" data-id="${g._id}" data-action="delete-wish">Delete</button>
+            </div>
+          </div>
+        `;
+        wishlistGrid.appendChild(card);
       }
     }
 
@@ -351,35 +554,31 @@
       return s.replace(/"/g, "&quot;");
     }
 
-    // --- Add form logic ---
+    // Library form
     const addForm = $("#addForm");
-    const deviceSel = $("#device");
-    const titleInput = $("#titleInput");
-    const storageInput = $("#storageInput");
-    const releaseInput = $("#releaseInput");
-    const coverInput = $("#coverInput");
     const fetchMetaBtn = $("#fetchMetaBtn");
 
     fetchMetaBtn.addEventListener("click", async () => {
-      const q = titleInput.value.trim();
+      const q = $("#titleInput").value.trim();
       if (!q) { alert("Enter a game title first."); return; }
       fetchMetaBtn.disabled = true; fetchMetaBtn.textContent = "Fetching…";
       try {
         const meta = await fetchMetadata(q);
-        if (!releaseInput.value) releaseInput.value = meta.releaseDate;
-        if (!coverInput.value) coverInput.value = meta.imageUrl;
+        if (!$("#releaseInput").value) $("#releaseInput").value = meta.releaseDate;
+        if (!$("#coverInput").value) $("#coverInput").value = meta.imageUrl;
       } catch (e) {
         alert("Failed to fetch metadata. Try again.");
       } finally {
-        fetchMetaBtn.disabled = false; fetchMetaBtn.textContent = "Fetch metadata";
+        fetchMetaBtn.disabled = false; fetchMetaBtn.textContent = "Auto-fill with metadata";
       }
     });
 
     addForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const device = deviceSel.value.trim();
-      const title = titleInput.value.trim();
-      const storagePath = storageInput.value.trim();
+      const device = $("#device").value.trim();
+      const title = $("#titleInput").value.trim();
+      const storagePath = $("#storageInput").value.trim();
+      
       if (!device || !title || !storagePath) {
         alert("Please fill device, title, and storage directory.");
         return;
@@ -390,8 +589,9 @@
           device,
           title,
           storagePath,
-          releaseDate: releaseInput.value || "",
-          imageUrl: coverInput.value || ""
+          releaseDate: $("#releaseInput").value || "",
+          imageUrl: $("#coverInput").value || "",
+          isWishlist: false
         });
         render();
         addForm.reset();
@@ -400,8 +600,54 @@
       }
     });
 
-    // --- Library actions ---
-    grid.addEventListener("click", async (e) => {
+    // Wishlist form
+    const wishlistForm = $("#wishlistForm");
+    const fetchWishMetaBtn = $("#fetchWishMetaBtn");
+
+    fetchWishMetaBtn.addEventListener("click", async () => {
+      const q = $("#wishTitle").value.trim();
+      if (!q) { alert("Enter a game title first."); return; }
+      fetchWishMetaBtn.disabled = true; fetchWishMetaBtn.textContent = "Fetching…";
+      try {
+        const meta = await fetchMetadata(q);
+        if (!$("#wishRelease").value) $("#wishRelease").value = meta.releaseDate;
+        if (!$("#wishCover").value) $("#wishCover").value = meta.imageUrl;
+      } catch (e) {
+        alert("Failed to fetch metadata. Try again.");
+      } finally {
+        fetchWishMetaBtn.disabled = false; fetchWishMetaBtn.textContent = "Auto-fill with metadata";
+      }
+    });
+
+    wishlistForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const device = $("#wishDevice").value.trim();
+      const title = $("#wishTitle").value.trim();
+      
+      if (!device || !title) {
+        alert("Please fill device and title.");
+        return;
+      }
+      
+      try {
+        await addGame({
+          device,
+          title,
+          releaseDate: $("#wishRelease").value || "",
+          imageUrl: $("#wishCover").value || "",
+          notes: $("#wishNotes").value.trim(),
+          isWishlist: true,
+          storagePath: "N/A"
+        });
+        render();
+        wishlistForm.reset();
+      } catch (error) {
+        alert("Failed to add to wishlist. Check server connection.");
+      }
+    });
+
+    // Event handlers
+    libraryGrid.addEventListener("click", async (e) => {
       const btn = e.target.closest("button");
       if (!btn) return;
       const id = btn.dataset.id;
@@ -410,7 +656,7 @@
       if (action === "delete") {
         if (!confirm("Delete this game?")) return;
         try {
-          await deleteGame(id);
+          await deleteGame(id, false);
           render();
         } catch (error) {
           alert("Failed to delete game.");
@@ -427,44 +673,12 @@
           await updateGame(id, { review });
           render();
         } catch (error) {
-          alert("Failed to fetch review. Make sure IGDB credentials are set.");
+          alert("Failed to fetch review.");
           btn.disabled = false;
           btn.textContent = "Get Review";
         }
-      } else if (action === "edit") {
-        const g = state.find(x => x._id === id);
-        if (!g) return;
-        deviceSel.value = g.device;
-        titleInput.value = g.title;
-        storageInput.value = g.storagePath;
-        releaseInput.value = g.releaseDate || "";
-        coverInput.value = g.imageUrl || "";
-        
-        const submitBtn = addForm.querySelector("button[type='submit']");
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = "Update game";
-        
-        const handler = async (ev) => {
-          ev.preventDefault();
-          try {
-            await updateGame(id, {
-              device: deviceSel.value,
-              title: titleInput.value.trim(),
-              storagePath: storageInput.value.trim(),
-              releaseDate: releaseInput.value || "",
-              imageUrl: coverInput.value || ""
-            });
-            render();
-            addForm.reset();
-            submitBtn.textContent = originalText;
-            submitBtn.removeEventListener("click", handler);
-          } catch (error) {
-            alert("Failed to update game.");
-          }
-        };
-        submitBtn.addEventListener("click", handler);
       } else if (action === "save-storage") {
-        const input = grid.querySelector(`input.storage-edit[data-id="${id}"]`);
+        const input = libraryGrid.querySelector(`input.storage-edit[data-id="${id}"]`);
         try {
           await updateGame(id, { storagePath: input.value.trim() });
           btn.textContent = "Saved ✓";
@@ -475,13 +689,31 @@
       }
     });
 
-    // --- Filters & search ---
+    wishlistGrid.addEventListener("click", async (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+
+      if (action === "delete-wish") {
+        if (!confirm("Remove from wishlist?")) return;
+        try {
+          await deleteGame(id, true);
+          render();
+        } catch (error) {
+          alert("Failed to delete game.");
+        }
+      } else if (action === "move-to-library") {
+        if (!confirm("Move this game to your library?")) return;
+        await moveToLibrary(id);
+      }
+    });
+
     filterRadios.forEach(r => r.addEventListener("change", render));
     searchInput.addEventListener("input", render);
 
-    // --- Export/Import ---
     $("#exportBtn").addEventListener("click", () => {
-      const json = JSON.stringify(state, null, 2);
+      const json = JSON.stringify([...state, ...wishlist], null, 2);
       const blob = new Blob([json], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -515,7 +747,6 @@
       input.click();
     });
 
-    // --- Init ---
     (async () => {
       updateConnectionStatus(false);
       await loadGames();
