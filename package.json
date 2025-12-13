@@ -1,0 +1,19 @@
+{
+  "name": "game-tracker",
+  "version": "1.0.0",
+  "description": "Game Tracker with MongoDB and IGDB integration",
+  "main": "api/games.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel"
+  },
+  "dependencies": {
+    "mongodb": "^6.3.0"
+  },
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}
